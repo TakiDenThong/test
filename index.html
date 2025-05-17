@@ -2,60 +2,87 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Upload Tool</title>
+  <title>Admin Upload with Persistent File List</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    ul { padding-left: 20px; }
+    li { margin-bottom: 10px; }
+  </style>
 </head>
 <body>
 
   <h2>📤 Admin Upload Files</h2>
   <input type="file" id="fileInput" multiple />
-  <button id="downloadJsonBtn" disabled>⬇️ Download JSON Index</button>
+  <button id="clearBtn">🗑 Clear All Stored Files</button>
 
-  <h3>📄 Uploaded Files:</h3>
-  <ul id="fileList"></ul>
+  <h3>📁 Uploaded Files:</h3>
+  <ul id="fileList">Loading...</ul>
 
   <script>
     const fileInput = document.getElementById("fileInput");
     const fileList = document.getElementById("fileList");
-    const downloadJsonBtn = document.getElementById("downloadJsonBtn");
+    const clearBtn = document.getElementById("clearBtn");
 
-    let fileData = [];
+    // Load files from localStorage
+    const storedFiles = JSON.parse(localStorage.getItem("uploadedFiles") || "[]");
+
+    // Recreate blob URLs for display
+    storedFiles.forEach(file => {
+      const byteArray = Uint8Array.from(atob(file.base64), c => c.charCodeAt(0));
+      const blob = new Blob([byteArray], { type: file.type });
+      const url = URL.createObjectURL(blob);
+      addFileToList(file.name, url);
+    });
 
     fileInput.addEventListener("change", () => {
-      fileData = [];
-      fileList.innerHTML = "";
-      downloadJsonBtn.disabled = false;
+      const files = Array.from(fileInput.files);
 
-      Array.from(fileInput.files).forEach(file => {
-        const url = URL.createObjectURL(file);
+      files.forEach(file => {
+        const reader = new FileReader();
 
-        fileData.push({
-          name: file.name,
-          url: url
-        });
+        reader.onload = () => {
+          const base64 = reader.result.split(',')[1]; // remove "data:*/*;base64," part
 
-        const li = document.createElement("li");
-        const a = document.createElement("a");
-        a.href = url;
-        a.textContent = file.name;
-        a.download = file.name;
+          // Save to localStorage
+          const newFile = {
+            name: file.name,
+            type: file.type,
+            base64: base64
+          };
 
-        li.appendChild(a);
-        fileList.appendChild(li);
+          storedFiles.push(newFile);
+          localStorage.setItem("uploadedFiles", JSON.stringify(storedFiles));
+
+          const blob = new Blob([file], { type: file.type });
+          const url = URL.createObjectURL(blob);
+
+          addFileToList(file.name, url);
+        };
+
+        reader.readAsDataURL(file);
       });
+
+      fileInput.value = ""; // reset input
     });
 
-    downloadJsonBtn.addEventListener("click", () => {
-      const json = JSON.stringify({ files: fileData }, null, 2);
-      const blob = new Blob([json], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
+    clearBtn.addEventListener("click", () => {
+      localStorage.removeItem("uploadedFiles");
+      fileList.innerHTML = "<em>No files uploaded.</em>";
+    });
 
+    function addFileToList(name, url) {
+      const li = document.createElement("li");
       const a = document.createElement("a");
       a.href = url;
-      a.download = "files.json";
-      a.click();
+      a.textContent = `⬇️ ${name}`;
+      a.download = name;
+      li.appendChild(a);
+      fileList.appendChild(li);
+    }
 
-      URL.revokeObjectURL(url);
-    });
+    if (storedFiles.length === 0) {
+      fileList.innerHTML = "<em>No files uploaded.</em>";
+    }
   </script>
 
 </body>
