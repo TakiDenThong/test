@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Download JSON File</title>
+</head>
+<body>
+  <h1>Save JSON File Example</h1>
+  <button id="downloadBtn">Download JSON</button>
+
+  <script>
+    // JavaScript object you want to store
+    const data = {
+      name: "Example App",
+      version: "1.0.0",
+      description: "This is a sample JSON file."
+    };
+
+    // Function to convert and download
+    function downloadJSON() {
+      const jsonStr = JSON.stringify(data, null, 2); // Convert object to formatted JSON string
+      const blob = new Blob([jsonStr], { type: "application/json" }); // Create a Blob
+      const url = URL.createObjectURL(blob); // Create an object URL
+      const a = document.createElement("a"); // Create anchor element
+      a.href = url;
+      a.download = "data.json"; // File name
+      document.body.appendChild(a);
+      a.click(); // Trigger download
+      document.body.removeChild(a); // Cleanup
+      URL.revokeObjectURL(url); // Revoke object URL
+    }
+
+    // Bind function to button
+    document.getElementById("downloadBtn").addEventListener("click", downloadJSON);
+  </script>
+</body>
+</html>
