@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload File</title>
+</head>
+<body>
+  <h2>Upload Any File</h2>
+  <form action="/upload" method="POST" enctype="multipart/form-data">
+    <input type="file" name="myFile" required />
+    <button type="submit">Upload</button>
+  </form>
+
+  <h3>Uploaded Files</h3>
+  <ul id="fileList"></ul>
+
+  <script>
+    fetch('/files.json')
+      .then(res => res.json())
+      .then(files => {
+        const list = document.getElementById('fileList');
+        list.innerHTML = '';
+        files.reverse().forEach(file => {
+          const ext = file.split('.').pop().toLowerCase();
+          let preview = '';
+
+          if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+            preview = `<br><img src="/uploads/${file}" width="100">`;
+          } else if (['mp4', 'webm'].includes(ext)) {
+            preview = `<br><video width="200" controls src="/uploads/${file}"></video>`;
+          } else if (['mp3', 'wav'].includes(ext)) {
+            preview = `<br><audio controls src="/uploads/${file}"></audio>`;
+          }
+
+          list.innerHTML += `
+            <li>
+              <a href="/uploads/${file}" target="_blank">${file}</a>
+              ${preview}
+            </li>
+          `;
+        });
+      });
+  </script>
+</body>
+</html>
