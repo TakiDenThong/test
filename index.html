@@ -2,45 +2,42 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Upload Files to JSON</title>
+  <title>Upload and Download Files</title>
 </head>
 <body>
 
-  <h2>Select Files to Convert to JSON</h2>
+  <h2>Upload Files</h2>
   <input type="file" id="fileInput" multiple />
-  <button id="downloadBtn" disabled>Download JSON</button>
+  <div id="downloadLinks"></div>
 
   <script>
     const fileInput = document.getElementById("fileInput");
-    const downloadBtn = document.getElementById("downloadBtn");
-    let fileData = {};
+    const downloadLinks = document.getElementById("downloadLinks");
 
-    fileInput.addEventListener("change", async (event) => {
-      const files = event.target.files;
-      fileData = {}; // reset
+    fileInput.addEventListener("change", () => {
+      downloadLinks.innerHTML = ""; // Clear previous links
+
+      const files = fileInput.files;
 
       for (const file of files) {
-        const content = await file.text();
-        fileData[file.name] = content;
+        const reader = new FileReader();
+
+        reader.onload = (event) => {
+          const blob = new Blob([event.target.result], { type: file.type });
+          const url = URL.createObjectURL(blob);
+
+          // Create download link
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = file.name;
+          a.textContent = `Download ${file.name}`;
+          a.style.display = "block";
+
+          downloadLinks.appendChild(a);
+        };
+
+        reader.readAsArrayBuffer(file); // use ArrayBuffer to support all file types
       }
-
-      // Enable download once files are read
-      downloadBtn.disabled = false;
-    });
-
-    downloadBtn.addEventListener("click", () => {
-      const jsonString = JSON.stringify(fileData, null, 2);
-      const blob = new Blob([jsonString], { type: "application/json" });
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "files.json";
-      document.body.appendChild(a);
-      a.click();
-
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
     });
   </script>
 
