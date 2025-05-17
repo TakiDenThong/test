@@ -2,44 +2,60 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Download Files</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    .file-item { margin-bottom: 10px; }
-    .file-item a { color: blue; text-decoration: underline; }
-  </style>
+  <title>Admin Upload Tool</title>
 </head>
 <body>
 
-  <h1>📁 Download Files</h1>
-  <div id="fileList">Loading files...</div>
+  <h2>📤 Admin Upload Files</h2>
+  <input type="file" id="fileInput" multiple />
+  <button id="downloadJsonBtn" disabled>⬇️ Download JSON Index</button>
+
+  <h3>📄 Uploaded Files:</h3>
+  <ul id="fileList"></ul>
 
   <script>
-    const GITHUB_JSON_URL = "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/files.json";
+    const fileInput = document.getElementById("fileInput");
+    const fileList = document.getElementById("fileList");
+    const downloadJsonBtn = document.getElementById("downloadJsonBtn");
 
-    fetch(GITHUB_JSON_URL)
-      .then(response => response.json())
-      .then(data => {
-        const container = document.getElementById('fileList');
-        container.innerHTML = "";
+    let fileData = [];
 
-        data.files.forEach(file => {
-          const div = document.createElement('div');
-          div.className = 'file-item';
+    fileInput.addEventListener("change", () => {
+      fileData = [];
+      fileList.innerHTML = "";
+      downloadJsonBtn.disabled = false;
 
-          const link = document.createElement('a');
-          link.href = file.url;
-          link.download = file.name;
-          link.textContent = `⬇️ Download ${file.name}`;
+      Array.from(fileInput.files).forEach(file => {
+        const url = URL.createObjectURL(file);
 
-          div.appendChild(link);
-          container.appendChild(div);
+        fileData.push({
+          name: file.name,
+          url: url
         });
-      })
-      .catch(error => {
-        console.error('Error loading files:', error);
-        document.getElementById('fileList').textContent = "Failed to load file list.";
+
+        const li = document.createElement("li");
+        const a = document.createElement("a");
+        a.href = url;
+        a.textContent = file.name;
+        a.download = file.name;
+
+        li.appendChild(a);
+        fileList.appendChild(li);
       });
+    });
+
+    downloadJsonBtn.addEventListener("click", () => {
+      const json = JSON.stringify({ files: fileData }, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "files.json";
+      a.click();
+
+      URL.revokeObjectURL(url);
+    });
   </script>
 
 </body>
