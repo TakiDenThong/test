@@ -2,43 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Upload and Download Files</title>
+  <title>Download Files</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .file-item { margin-bottom: 10px; }
+    .file-item a { color: blue; text-decoration: underline; }
+  </style>
 </head>
 <body>
 
-  <h2>Upload Files</h2>
-  <input type="file" id="fileInput" multiple />
-  <div id="downloadLinks"></div>
+  <h1>📁 Download Files</h1>
+  <div id="fileList">Loading files...</div>
 
   <script>
-    const fileInput = document.getElementById("fileInput");
-    const downloadLinks = document.getElementById("downloadLinks");
+    const GITHUB_JSON_URL = "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/files.json";
 
-    fileInput.addEventListener("change", () => {
-      downloadLinks.innerHTML = ""; // Clear previous links
+    fetch(GITHUB_JSON_URL)
+      .then(response => response.json())
+      .then(data => {
+        const container = document.getElementById('fileList');
+        container.innerHTML = "";
 
-      const files = fileInput.files;
+        data.files.forEach(file => {
+          const div = document.createElement('div');
+          div.className = 'file-item';
 
-      for (const file of files) {
-        const reader = new FileReader();
+          const link = document.createElement('a');
+          link.href = file.url;
+          link.download = file.name;
+          link.textContent = `⬇️ Download ${file.name}`;
 
-        reader.onload = (event) => {
-          const blob = new Blob([event.target.result], { type: file.type });
-          const url = URL.createObjectURL(blob);
-
-          // Create download link
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = file.name;
-          a.textContent = `Download ${file.name}`;
-          a.style.display = "block";
-
-          downloadLinks.appendChild(a);
-        };
-
-        reader.readAsArrayBuffer(file); // use ArrayBuffer to support all file types
-      }
-    });
+          div.appendChild(link);
+          container.appendChild(div);
+        });
+      })
+      .catch(error => {
+        console.error('Error loading files:', error);
+        document.getElementById('fileList').textContent = "Failed to load file list.";
+      });
   </script>
 
 </body>
